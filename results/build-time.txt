@@ -1,0 +1,4 @@
+localhost:5000/test-airflow:latest:build:14
+localhost:5000/test-airflow:estargz:convert:82
+localhost:5000/test-airflow:latest:push:0
+localhost:5000/test-airflow:estargz:push:1

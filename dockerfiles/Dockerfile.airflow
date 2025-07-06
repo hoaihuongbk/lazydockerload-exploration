@@ -1,0 +1,100 @@
+# Docker Image for Compression Testing
+# Designed to test different compression methods effectively
+
+FROM python:3.8-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Add a unique build identifier to force different content
+ARG COMPRESSION_TYPE=none
+ARG BUILD_ID=1
+
+# Layer 1: Base system dependencies (stable, rarely changes)
+# This layer will compress well with any method
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        curl \
+        git \
+        pkg-config \
+        wget \
+        unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Layer 2: Build dependencies (medium stability)
+# Contains libraries that change occasionally
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+        default-libmysqlclient-dev \
+        libffi-dev \
+        libssl-dev \
+        libxml2-dev \
+        libxslt-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Layer 3: Python dependencies (changes frequently)
+# This layer will show compression differences
+RUN pip install --upgrade pip setuptools wheel
+
+# Layer 4: Application dependencies (very frequent changes)
+# Large layer with many packages - good for compression testing
+RUN pip install \
+    apache-airflow[postgres,celery]==2.7.3 \
+    apache-airflow-providers-cncf-kubernetes==7.4.0 \
+    pendulum==2.1.2 \
+    flask-session==0.5.0 \
+    requests==2.31.0 \
+    pandas==2.0.3 \
+    numpy==1.24.3 \
+    scikit-learn==1.3.0 \
+    matplotlib==3.7.2 \
+    seaborn==0.12.2 \
+    jupyter==1.0.0 \
+    ipython==8.12.3
+
+# Layer 5: Application code and configuration (changes very frequently)
+# Small layer with text files - different compression characteristics
+RUN useradd -ms /bin/bash -d /opt/airflow airflow
+
+# Set working directory
+WORKDIR /opt/airflow
+
+# Create some test files with different content types
+# These will test compression effectiveness on different data types
+RUN mkdir -p /opt/airflow/test-data
+
+# Create a large text file (good for compression)
+RUN python -c "import random; import string; open('/opt/airflow/test-data/large_text.txt', 'w').write(''.join(['This is a test line with some repetitive content. ' * 10 + '\n' + 'Another line with different but still repetitive text. ' * 8 + '\n' + ''.join(random.choices(string.ascii_letters + string.digits, k=100)) + '\n' for _ in range(10000)]))"
+
+# Create a binary-like file (less compressible)
+RUN python -c "import random; open('/opt/airflow/test-data/random_data.bin', 'wb').write(bytes(random.getrandbits(8) for _ in range(50000)))"
+
+# Create a structured data file (JSON - good for compression)
+RUN python -c "import json; import random; data = [{'id': i, 'name': f'item_{i}', 'value': random.random(), 'category': random.choice(['A', 'B', 'C', 'D']), 'description': 'This is a description that repeats many times in the data structure'} for i in range(1000)]; open('/opt/airflow/test-data/structured_data.json', 'w').write(json.dumps(data, indent=2))"
+
+# Add build metadata to make each image unique
+RUN echo "Compression type: ${COMPRESSION_TYPE}" > /opt/airflow/compression-info.txt && \
+    echo "Build ID: ${BUILD_ID}" >> /opt/airflow/compression-info.txt && \
+    echo "Build timestamp: $(date)" >> /opt/airflow/compression-info.txt
+
+# Copy entrypoint script
+COPY dockerfiles/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Switch to airflow user
+USER airflow
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK CMD ["curl", "-f", "http://localhost:8080/health"]
+
+# Default command
+ENTRYPOINT ["/entrypoint.sh"]
+CMD [] 
