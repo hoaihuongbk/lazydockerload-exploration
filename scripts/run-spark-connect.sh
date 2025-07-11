@@ -8,6 +8,8 @@ PORT="${2:-15002}"
 TAG="standard"
 if [ "$SNAPSHOTTER" = "stargz" ]; then
   TAG="estargz"
+elif [ "$SNAPSHOTTER" = "nydus" ]; then
+  TAG="nydus"
 fi
 
 IMAGE="$REGISTRY/$IMAGE_NAME:$TAG"
@@ -31,31 +33,31 @@ waited=0
 max_wait=300
 ready=0
 
-# Use a unique virtual environment per snapshotter
-VENV_NAME=".venv-$SNAPSHOTTER"
-uv venv $VENV_NAME
-. $VENV_NAME/bin/activate
-uv pip install -r requirements-client.txt
-
 # Try up to max_wait seconds to connect
 while true; do
   uv run scripts/test_spark_connect_client.py > .spark_connect_client.log 2>&1 && ready=1 && break
   sleep 1
   waited=$((waited+1))
+  # Check if the container has stopped
+  # if ! colima ssh -- sudo nerdctl ps -q -f name=$CNAME | grep -q .; then
+  #   echo "[ERROR] Spark Connect container $CNAME has stopped unexpectedly." | tee -a $RESULT_FILE
+  #   colima ssh -- sudo nerdctl logs $CNAME || true
+  #   cat .spark_connect_client.log
+  #   colima ssh -- sudo nerdctl rm -f $CNAME || true
+  #   echo "$SNAPSHOTTER:CONTAINER_EXITED" | tee -a $RESULT_FILE
+  #   exit 1
+  # fi
   if [ $waited -ge $max_wait ]; then
     echo "[ERROR] Timeout waiting for Spark Connect server to be ready (client could not connect)" | tee -a $RESULT_FILE
     cat .spark_connect_client.log
     colima ssh -- sudo nerdctl logs $CNAME || true
     colima ssh -- sudo nerdctl rm -f $CNAME || true
     echo "$SNAPSHOTTER:TIMEOUT" | tee -a $RESULT_FILE
-    deactivate
     exit 1
   fi
 done
 
 cat .spark_connect_client.log
-
-deactivate
 
 if [ $ready -eq 1 ]; then
   END_TIME=$(python3 -c 'import time; print(int(time.time() * 1000))')

@@ -12,9 +12,9 @@ help:
 	@echo "  setup    - Setup environment (start registry in Colima, install nerdctl if needed)"
 	@echo "  build    - Build the image with nerdctl (default: SUFFIX=airflow)"
 	@echo "  build/<name> - Build the image for <name> (e.g., make build/airflow)"
-	@echo "  run/airflow       - Run Airflow image with overlayfs and stargz snapshotters"
-	@echo "  run/spark-connect - Run Spark Connect image with overlayfs and stargz snapshotters"
-	@echo "  run/sample        - Run Sample image with overlayfs and stargz snapshotters"
+	@echo "  run/airflow       - Run Airflow image with overlayfs, stargz, and nydus snapshotters"
+	@echo "  run/spark-connect - Run Spark Connect image with overlayfs, stargz, and nydus snapshotters"
+	@echo "  run/sample        - Run Sample image with overlayfs, stargz, and nydus snapshotters"
 	@echo "  results  - Show test results"
 	@echo "  clean    - Clean up test images, containers, and results"
 	@echo "  help     - Show this help message"
@@ -40,25 +40,30 @@ build/%:
 	$(MAKE) build SUFFIX=$*
 
 run/airflow:
-	@echo "Running Airflow image with overlayfs and stargz snapshotters..."
+	@echo "Running Airflow image with overlayfs, stargz, and nydus snapshotters..."
 	@rm -f results/airflow-startup-times.txt
 	@touch results/airflow-startup-times.txt
 	bash scripts/run-airflow.sh overlayfs 8080
 	bash scripts/run-airflow.sh stargz 8080
+	bash scripts/run-airflow.sh nydus 8080
 
 run/spark-connect:
-	@echo "Running Spark Connect image with overlayfs and stargz snapshotters..."
+	@echo "Running Spark Connect image with overlayfs, stargz, and nydus snapshotters..."
 	@rm -f results/spark-connect-startup-times.txt
 	@touch results/spark-connect-startup-times.txt
+	uv venv .venv-spark-connect
+	. .venv-spark-connect/bin/activate && uv pip install -r requirements-client.txt
 	bash scripts/run-spark-connect.sh overlayfs 15002
 	bash scripts/run-spark-connect.sh stargz 15002
+	bash scripts/run-spark-connect.sh nydus 15002
 
 run/sample:
-	@echo "Running Sample image with overlayfs and stargz snapshotters..."
+	@echo "Running Sample image with overlayfs, stargz, and nydus snapshotters..."
 	@rm -f results/sample-startup-times.txt
 	@touch results/sample-startup-times.txt
 	bash scripts/run-sample.sh overlayfs
 	bash scripts/run-sample.sh stargz
+	bash scripts/run-sample.sh nydus
 
 results:
 	@echo "=== Results Directory Contents ==="

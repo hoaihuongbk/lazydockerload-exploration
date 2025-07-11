@@ -7,6 +7,8 @@ SNAPSHOTTER="${1:-overlayfs}"  # or stargz
 TAG="standard"
 if [ "$SNAPSHOTTER" = "stargz" ]; then
   TAG="estargz"
+elif [ "$SNAPSHOTTER" = "nydus" ]; then
+  TAG="nydus"
 fi
 
 IMAGE="$REGISTRY/$IMAGE_NAME:$TAG"

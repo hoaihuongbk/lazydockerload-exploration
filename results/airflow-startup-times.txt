@@ -1,2 +1,3 @@
-overlayfs:12939ms (12.939s)
-stargz:7378ms (7.378s)
+overlayfs:9715ms (9.715s)
+stargz:2287ms (2.287s)
+nydus:3260ms (3.260s)

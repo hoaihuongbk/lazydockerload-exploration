@@ -12,6 +12,7 @@ REGISTRY="localhost:5000"
 IMAGE_NAME="test-$SUFFIX"
 STANDARD_IMAGE="$REGISTRY/$IMAGE_NAME:standard"
 ESTARGZ_IMAGE="$REGISTRY/$IMAGE_NAME:estargz"
+NYDUS_IMAGE="$REGISTRY/$IMAGE_NAME:nydus"
 RESULTS_DIR="results"
 DOCKERFILE="dockerfiles/Dockerfile.$SUFFIX"
 
@@ -23,10 +24,16 @@ colima ssh -- sudo nerdctl build -f $DOCKERFILE -t $STANDARD_IMAGE .
 echo "[INFO] Converting standard image to eStargz format as $ESTARGZ_IMAGE ..."
 colima ssh -- sudo nerdctl image convert --estargz --oci $STANDARD_IMAGE $ESTARGZ_IMAGE
 
+echo "[INFO] Converting standard image to Nydus format as $NYDUS_IMAGE ..."
+colima ssh -- sudo nerdctl image convert --nydus --oci $STANDARD_IMAGE $NYDUS_IMAGE
+
 echo "[INFO] Pushing standard image $STANDARD_IMAGE to registry ..."
 colima ssh -- sudo nerdctl push $STANDARD_IMAGE
 
 echo "[INFO] Pushing eStargz image $ESTARGZ_IMAGE to registry ..."
 colima ssh -- sudo nerdctl push $ESTARGZ_IMAGE
 
-echo "[SUCCESS] Both $STANDARD_IMAGE and $ESTARGZ_IMAGE built and pushed." 
+echo "[INFO] Pushing Nydus image $NYDUS_IMAGE to registry ..."
+colima ssh -- sudo nerdctl push $NYDUS_IMAGE
+
+echo "[SUCCESS] All $STANDARD_IMAGE, $ESTARGZ_IMAGE, and $NYDUS_IMAGE built and pushed." 
