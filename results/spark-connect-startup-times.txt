@@ -1,0 +1,8 @@
+Connected to Spark Connect server in 14.853 seconds
+Query result: 10
+Time to first query: 16.234 seconds
+overlayfs:17957ms (17.957s)
+Connected to Spark Connect server in 7.904 seconds
+Query result: 10
+Time to first query: 9.341 seconds
+stargz:10573ms (10.573s)

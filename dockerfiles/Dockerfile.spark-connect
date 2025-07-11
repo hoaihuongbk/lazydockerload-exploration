@@ -1,0 +1,29 @@
+# Docker Image for Spark Connect Compression Testing
+# Designed to test lazy loading and compression methods with Spark Connect
+
+# Layer 1: Base image with Spark (stable, rarely changes)
+FROM apache/spark:3.5.0
+
+# Layer 2: Download Spark Connect JAR
+RUN wget -O /opt/spark/jars/spark-connect_2.12-3.5.0.jar https://repo1.maven.org/maven2/org/apache/spark/spark-connect_2.12/3.5.0/spark-connect_2.12-3.5.0.jar
+
+# Layer 3: Download Delta Lake JAR (unused)
+RUN wget -O /opt/spark/jars/delta-core_2.12-2.4.0.jar https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.4.0/delta-core_2.12-2.4.0.jar
+
+# Layer 4: Download Iceberg JAR (unused)
+RUN wget -O /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.4.2.jar https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.4.2/iceberg-spark-runtime-3.5_2.12-1.4.2.jar
+
+# Layer 5: Download Hudi JAR (unused)
+RUN wget -O /opt/spark/jars/hudi-spark3.3-bundle_2.12-0.14.1.jar https://repo1.maven.org/maven2/org/apache/hudi/hudi-spark3.3-bundle_2.12/0.14.1/hudi-spark3.3-bundle_2.12-0.14.1.jar
+
+# Layer 6: Add a large dummy file for even more size
+RUN dd if=/dev/urandom of=/opt/spark/jars/dummy-large-file.bin bs=10M count=10
+
+# Layer 7: Environment variables (configuration, rarely changes)
+ENV SPARK_NO_DAEMONIZE=true
+
+# Layer 8: Expose Spark Connect port (configuration)
+EXPOSE 15002
+
+# Layer 9: Entrypoint to start Spark Connect server
+ENTRYPOINT ["/opt/spark/sbin/start-connect-server.sh"]

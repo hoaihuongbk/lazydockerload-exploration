@@ -1,2 +1,0 @@
-overlayfs:estargz:7440ms (7.440s)
-stargz:estargz:357ms (0.357s)

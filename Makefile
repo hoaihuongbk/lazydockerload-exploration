@@ -1,5 +1,7 @@
 # Docker Image Snapshotter Comparison Makefile
 
+PORT ?= 8080
+
 .PHONY: help setup clean build run test results
 
 help:
@@ -9,9 +11,9 @@ help:
 	@echo "Available commands:"
 	@echo "  setup    - Setup environment (start registry in Colima, install nerdctl if needed)"
 	@echo "  build    - Build the image with nerdctl (default: SUFFIX=airflow)"
-	@echo "  run      - Run the image with overlayfs and stargz snapshotters (default: SUFFIX=airflow)"
+	@echo "  run      - Run the image with overlayfs and stargz snapshotters (default: SUFFIX=airflow, PORT=8080)"
 	@echo "  build/<name> - Build the image for <name> (e.g., make build/airflow)"
-	@echo "  run/<name>   - Run the image for <name> (e.g., make run/spark)"
+	@echo "  run/<name>   - Run the image for <name> (e.g., make run/spark-connect PORT=15002)"
 	@echo "  results  - Show test results"
 	@echo "  clean    - Clean up test images, containers, and results"
 	@echo "  help     - Show this help message"
@@ -22,6 +24,7 @@ help:
 	@echo "  make results"
 	@echo ""
 	@echo "To use a different Dockerfile and image, use e.g. make build/foo, make run/spark, etc."
+	@echo "To override the port, use e.g. make run/spark-connect PORT=15002"
 
 setup:
 	@echo "Setting up environment..."
@@ -34,7 +37,7 @@ build:
 
 run:
 	@echo "Running the image with overlayfs and stargz snapshotters..."
-	./scripts/nerdctl-run-lazyload-test.sh $(SUFFIX)
+	./scripts/nerdctl-run-lazyload-test.sh $(SUFFIX) $(PORT)
 
 results:
 	@echo "=== Results Directory Contents ==="
@@ -55,7 +58,7 @@ build/%:
 	$(MAKE) build SUFFIX=$*
 
 run/%:
-	$(MAKE) run SUFFIX=$*
+	$(MAKE) run SUFFIX=$* PORT=$(PORT)
 
 test:
 	@echo "[DEPRECATED] Use 'make build/<name>' and 'make run/<name>' instead."
