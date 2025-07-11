@@ -1,0 +1,10 @@
+FROM debian:bullseye-slim
+# Install from basic system packages
+RUN apt-get update && apt-get install -y nano
+RUN apt-get install -y python
+
+# Create a binary-like file (less compressible)
+RUN python -c "import random; open('/tmp/random_data.bin', 'wb').write(bytes(random.getrandbits(8) for _ in range(50000)))"
+
+# Write a hello world text
+RUN echo "Hello, eStargz!" > /hello.txt

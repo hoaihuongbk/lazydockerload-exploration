@@ -18,15 +18,15 @@ DOCKERFILE="dockerfiles/Dockerfile.$SUFFIX"
 mkdir -p $RESULTS_DIR
 
 echo "[INFO] Building standard image $STANDARD_IMAGE using $DOCKERFILE ..."
-nerdctl build -f $DOCKERFILE -t $STANDARD_IMAGE .
+colima ssh -- sudo nerdctl build -f $DOCKERFILE -t $STANDARD_IMAGE .
 
 echo "[INFO] Converting standard image to eStargz format as $ESTARGZ_IMAGE ..."
-nerdctl image convert --estargz --oci $STANDARD_IMAGE $ESTARGZ_IMAGE
+colima ssh -- sudo nerdctl image convert --estargz --oci $STANDARD_IMAGE $ESTARGZ_IMAGE
 
 echo "[INFO] Pushing standard image $STANDARD_IMAGE to registry ..."
-nerdctl push $STANDARD_IMAGE
+colima ssh -- sudo nerdctl push $STANDARD_IMAGE
 
 echo "[INFO] Pushing eStargz image $ESTARGZ_IMAGE to registry ..."
-nerdctl push $ESTARGZ_IMAGE
+colima ssh -- sudo nerdctl push $ESTARGZ_IMAGE
 
 echo "[SUCCESS] Both $STANDARD_IMAGE and $ESTARGZ_IMAGE built and pushed." 

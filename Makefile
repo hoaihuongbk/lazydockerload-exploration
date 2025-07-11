@@ -2,7 +2,7 @@
 
 PORT ?= 8080
 
-.PHONY: help setup clean build run test results
+.PHONY: help setup clean build run/airflow run/spark-connect run/sample results
 
 help:
 	@echo "Nerdctl Snapshotter Comparison"
@@ -11,9 +11,10 @@ help:
 	@echo "Available commands:"
 	@echo "  setup    - Setup environment (start registry in Colima, install nerdctl if needed)"
 	@echo "  build    - Build the image with nerdctl (default: SUFFIX=airflow)"
-	@echo "  run      - Run the image with overlayfs and stargz snapshotters (default: SUFFIX=airflow, PORT=8080)"
 	@echo "  build/<name> - Build the image for <name> (e.g., make build/airflow)"
-	@echo "  run/<name>   - Run the image for <name> (e.g., make run/spark-connect PORT=15002)"
+	@echo "  run/airflow       - Run Airflow image with overlayfs and stargz snapshotters"
+	@echo "  run/spark-connect - Run Spark Connect image with overlayfs and stargz snapshotters"
+	@echo "  run/sample        - Run Sample image with overlayfs and stargz snapshotters"
 	@echo "  results  - Show test results"
 	@echo "  clean    - Clean up test images, containers, and results"
 	@echo "  help     - Show this help message"
@@ -28,16 +29,36 @@ help:
 
 setup:
 	@echo "Setting up environment..."
-	./scripts/setup.sh
+	sh scripts/setup.sh
 	@echo "Setup complete."
 
 build:
 	@echo "Building the image with nerdctl (default compression)..."
 	./scripts/nerdctl-build-lazyload-image.sh $(SUFFIX)
 
-run:
-	@echo "Running the image with overlayfs and stargz snapshotters..."
-	./scripts/nerdctl-run-lazyload-test.sh $(SUFFIX) $(PORT)
+build/%:
+	$(MAKE) build SUFFIX=$*
+
+run/airflow:
+	@echo "Running Airflow image with overlayfs and stargz snapshotters..."
+	@rm -f results/airflow-startup-times.txt
+	@touch results/airflow-startup-times.txt
+	bash scripts/run-airflow.sh overlayfs 8080
+	bash scripts/run-airflow.sh stargz 8080
+
+run/spark-connect:
+	@echo "Running Spark Connect image with overlayfs and stargz snapshotters..."
+	@rm -f results/spark-connect-startup-times.txt
+	@touch results/spark-connect-startup-times.txt
+	bash scripts/run-spark-connect.sh overlayfs 15002
+	bash scripts/run-spark-connect.sh stargz 15002
+
+run/sample:
+	@echo "Running Sample image with overlayfs and stargz snapshotters..."
+	@rm -f results/sample-startup-times.txt
+	@touch results/sample-startup-times.txt
+	bash scripts/run-sample.sh overlayfs
+	bash scripts/run-sample.sh stargz
 
 results:
 	@echo "=== Results Directory Contents ==="
@@ -52,21 +73,4 @@ clean:
 	nerdctl ps -a --format '{{.Names}}' | grep '^test-' | xargs -r nerdctl rm -f 2>/dev/null || true
 	nerdctl images --format '{{.Repository}}:{{.Tag}}' | grep '^localhost:5000/test-' | xargs -r nerdctl rmi -f 2>/dev/null || true
 	@rm -f results/*.txt
-	@echo "Cleanup completed"
-
-build/%:
-	$(MAKE) build SUFFIX=$*
-
-run/%:
-	$(MAKE) run SUFFIX=$* PORT=$(PORT)
-
-test:
-	@echo "[DEPRECATED] Use 'make build/<name>' and 'make run/<name>' instead."
-
-results:
-	@echo "=== Results Directory Contents ==="
-	@ls -1 results/*.txt 2>/dev/null || echo "No result files found."
-	@echo ""
-	@for file in results/*.txt; do \
-	  [ -f "$$file" ] && echo "=== $$(basename $$file) ===" && cat "$$file" && echo ""; \
-	done 
+	@echo "Cleanup completed" 
