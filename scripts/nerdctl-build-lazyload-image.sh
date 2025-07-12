@@ -36,4 +36,7 @@ colima ssh -- sudo nerdctl push $ESTARGZ_IMAGE
 echo "[INFO] Pushing Nydus image $NYDUS_IMAGE to registry ..."
 colima ssh -- sudo nerdctl push $NYDUS_IMAGE
 
-echo "[SUCCESS] All $STANDARD_IMAGE, $ESTARGZ_IMAGE, and $NYDUS_IMAGE built and pushed." 
+# echo "[INFO] Verifying Nydus image with nydusify check ..."
+# colima ssh -- sudo nydusify check --source $STANDARD_IMAGE --target $NYDUS_IMAGE || { echo "[ERROR] nydusify check failed"; exit 1; }
+
+echo "[SUCCESS] All $STANDARD_IMAGE, $ESTARGZ_IMAGE, $NYDUS_IMAGE built and pushed." 

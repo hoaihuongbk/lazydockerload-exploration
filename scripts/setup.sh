@@ -4,7 +4,7 @@ set -e
 # Setup script for Colima + containerd + stargz snapshotter + local registry
 # Reference: https://github.com/abiosoft/colima/issues/1202
 
-COLIMA_PROFILE="default"
+# COLIMA_PROFILE="lazydockerload"
 REGISTRY_NAME="registry"
 REGISTRY_PORT=5000
 
@@ -15,7 +15,7 @@ error() { echo -e "\033[1;31m[ERROR]\033[0m $1"; }
 # 1. Start Colima with containerd if not running
 if ! colima status | grep -q 'Running'; then
   info "Starting Colima with containerd..."
-  colima start --runtime containerd --profile "$COLIMA_PROFILE"
+  colima start --runtime containerd
   success "Colima started."
 else
   info "Colima is already running."
@@ -71,6 +71,29 @@ EOF
   sudo systemctl enable --now stargz-snapshotter
 '
 success "stargz-snapshotter installed, configured, and service started."
+
+# 3b. Install additional Nydus tools (nydus-image, nydusd, nydusify, nydusctl, nydus-overlayfs)
+info "Installing additional Nydus tools in Colima VM..."
+colima ssh -- bash -c '
+  set -e
+  NYDUS_VERSION="v2.2.0"
+  ARCH=$(uname -m)
+  [ "$ARCH" = "x86_64" ] && ARCH=amd64
+  [ "$ARCH" = "aarch64" ] && ARCH=arm64
+  NYDUS_URL="https://github.com/dragonflyoss/nydus/releases/download/${NYDUS_VERSION}/nydus-static-${NYDUS_VERSION}-linux-${ARCH}.tgz"
+  echo "Downloading Nydus static tools from $NYDUS_URL ..."
+  curl -L -o /tmp/nydus-static.tgz "$NYDUS_URL"
+  echo "[DEBUG] Listing tarball contents before extraction:"
+  tar -tzf /tmp/nydus-static.tgz
+  for bin in nydus-image nydusd nydusify nydusctl nydus-overlayfs; do
+    sudo tar -C /usr/local/bin -xzf /tmp/nydus-static.tgz nydus-static/$bin --strip-components=1
+    sudo chmod +x /usr/local/bin/$bin
+  done
+  rm /tmp/nydus-static.tgz
+  echo "[DEBUG] Listing all Nydus tools in /usr/local/bin:"
+  ls -l /usr/local/bin/nydus*
+'
+success "Nydus tools installed."
 
 # 3. Install and configure nydus-snapshotter
 info "Installing and configuring nydus-snapshotter in Colima VM..."
@@ -160,29 +183,6 @@ EOF
   sudo systemctl enable --now nydus-snapshotter
 '
 success "nydus-snapshotter installed, configured, and service started."
-
-# 3b. Install additional Nydus tools (nydus-image, nydusd, nydusify, nydusctl, nydus-overlayfs)
-info "Installing additional Nydus tools in Colima VM..."
-colima ssh -- bash -c '
-  set -e
-  NYDUS_VERSION="v2.2.0"
-  ARCH=$(uname -m)
-  [ "$ARCH" = "x86_64" ] && ARCH=amd64
-  [ "$ARCH" = "aarch64" ] && ARCH=arm64
-  NYDUS_URL="https://github.com/dragonflyoss/nydus/releases/download/${NYDUS_VERSION}/nydus-static-${NYDUS_VERSION}-linux-${ARCH}.tgz"
-  echo "Downloading Nydus static tools from $NYDUS_URL ..."
-  curl -L -o /tmp/nydus-static.tgz "$NYDUS_URL"
-  echo "[DEBUG] Listing tarball contents before extraction:"
-  tar -tzf /tmp/nydus-static.tgz
-  for bin in nydus-image nydusd nydusify nydusctl nydus-overlayfs; do
-    sudo tar -C /usr/local/bin -xzf /tmp/nydus-static.tgz nydus-static/$bin --strip-components=1
-    sudo chmod +x /usr/local/bin/$bin
-  done
-  rm /tmp/nydus-static.tgz
-  echo "[DEBUG] Listing all Nydus tools in /usr/local/bin:"
-  ls -l /usr/local/bin/nydus*
-'
-success "Nydus tools installed."
 
 # 4. Configure containerd to use stargz and nydus snapshotters as proxy_plugins
 info "Configuring containerd to register stargz and nydus snapshotters..."

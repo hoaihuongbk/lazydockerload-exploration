@@ -31,4 +31,4 @@ colima ssh -- sudo nerdctl --storage-driver=$SNAPSHOTTER run --rm --name $CNAME 
 END_TIME=$(python3 -c 'import time; print(int(time.time() * 1000))')
 STARTUP_TIME_MS=$((END_TIME - START_TIME))
 STARTUP_TIME_SEC=$(awk "BEGIN {printf \"%.3f\", ${STARTUP_TIME_MS}/1000}")
-echo "$SNAPSHOTTER:${STARTUP_TIME_MS}ms (${STARTUP_TIME_SEC}s)" | tee -a $RESULT_FILE 
+echo "$IMAGE_NAME:$TAG:${STARTUP_TIME_MS}ms (${STARTUP_TIME_SEC}s)" | tee -a $RESULT_FILE 

@@ -1,2 +1,2 @@
-overlayfs:26390ms (26.390s)
-stargz:20299ms (20.299s)
+test-spark-connect:standard:25566ms (25.566s)
+test-spark-connect:estargz:20146ms (20.146s)
