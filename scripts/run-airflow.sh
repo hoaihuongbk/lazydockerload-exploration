@@ -27,7 +27,13 @@ colima ssh -- sudo nerdctl rmi -f $IMAGE > /dev/null 2>&1 || true
 
 # Run the container and measure time for 'airflow version'
 START_TIME=$(python3 -c 'import time; print(int(time.time() * 1000))')
-colima ssh -- sudo nerdctl --storage-driver=$SNAPSHOTTER run --rm --name $CNAME --entrypoint airflow $IMAGE version
+case "$SNAPSHOTTER" in
+  overlayfs) HOST_PORT=8080 ;;
+  stargz)    HOST_PORT=8081 ;;
+  nydus)     HOST_PORT=8082 ;;
+  *)         HOST_PORT=8080 ;;
+esac
+colima ssh -- sudo nerdctl --storage-driver=$SNAPSHOTTER run -d --name $CNAME -p $HOST_PORT:8080 $IMAGE > /dev/null
 END_TIME=$(python3 -c 'import time; print(int(time.time() * 1000))')
 STARTUP_TIME_MS=$((END_TIME - START_TIME))
 STARTUP_TIME_SEC=$(awk "BEGIN {printf \"%.3f\", ${STARTUP_TIME_MS}/1000}")

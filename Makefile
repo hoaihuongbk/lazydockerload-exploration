@@ -54,8 +54,8 @@ run/spark-connect:
 	uv venv .venv-spark-connect
 	. .venv-spark-connect/bin/activate && uv pip install -r requirements-client.txt
 	bash scripts/run-spark-connect.sh overlayfs 15002
-	bash scripts/run-spark-connect.sh stargz 15002
-	bash scripts/run-spark-connect.sh nydus 15002
+	bash scripts/run-spark-connect.sh stargz 15012
+	# bash scripts/run-spark-connect.sh nydus 15022
 
 run/sample:
 	@echo "Running Sample image with overlayfs, stargz, and nydus snapshotters..."

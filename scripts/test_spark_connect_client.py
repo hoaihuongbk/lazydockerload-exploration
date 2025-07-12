@@ -1,9 +1,13 @@
 # Requires pyspark to be installed in your Python environment
 import time
+import sys
 from pyspark.sql import SparkSession
 
 start = time.time()
-spark = SparkSession.builder.remote("sc://localhost:15002").getOrCreate()
+
+host = sys.argv[1] if len(sys.argv) > 1 else "sc://localhost:15002"
+
+spark = SparkSession.builder.remote(host).getOrCreate()
 connect_time = time.time()
 print("Connected to Spark Connect server in {:.3f} seconds".format(connect_time - start))
 

@@ -1,2 +1,2 @@
-test-spark-connect:standard:25566ms (25.566s)
-test-spark-connect:estargz:20146ms (20.146s)
+test-spark-connect:standard:17478ms (17.478s)
+test-spark-connect:estargz:20720ms (20.720s)
